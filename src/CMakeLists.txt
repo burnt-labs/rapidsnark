@@ -147,7 +147,19 @@ target_include_directories(
     PUBLIC
     ../depends/icicle/icicle
 )
-find_library(NVML_LIBRARY nvidia-ml PATHS /usr/local/cuda-12.3/targets/x86_64-linux/lib/stubs/ )
+
+# Robustly find NVML library
+find_library(NVML_LIBRARY nvidia-ml)
+if(NOT NVML_LIBRARY)
+    # Check common CUDA stub locations
+    file(GLOB CUDA_STUBS "/usr/local/cuda-*/targets/x86_64-linux/lib/stubs")
+    find_library(NVML_LIBRARY nvidia-ml PATHS ${CUDA_STUBS})
+endif()
+
+if(NOT NVML_LIBRARY)
+    message(WARNING "nvidia-ml library not found. GPU targets might fail to link.")
+endif()
+
 target_link_libraries(icicle_ntt_test ${NVML_LIBRARY})
 set_target_properties(icicle_ntt_test PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
@@ -160,7 +172,6 @@ target_include_directories(
     PUBLIC
     ../depends/icicle/icicle
 )
-# find_library(NVML_LIBRARY nvidia-ml PATHS /usr/local/cuda-12.3/targets/x86_64-linux/lib/stubs/ )
 target_link_libraries(prover_cuda ${NVML_LIBRARY})
 set_target_properties(prover_cuda PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
