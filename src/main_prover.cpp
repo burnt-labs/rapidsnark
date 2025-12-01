@@ -90,9 +90,6 @@ int main(int argc, char **argv)
             throw std::runtime_error(errorMsg);
         }
 
-        std::ofstream proofFile(proofFilename);
-        proofFile.write(proofBuffer.data(), proofSize);
-
         std::ofstream publicFile(publicFilename);
         publicFile.write(publicBuffer.data(), publicSize);
 
@@ -137,7 +134,6 @@ int main(int argc, char **argv)
         START_TIMER(get_proof_timer);
         auto proof = prover->prove(wtnsData);
         END_TIMER(get_proof_timer, "generate proof");
-
 
         START_TIMER(write_proof_to_file_timer);
         std::ofstream proofFile;
