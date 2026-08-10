@@ -3,6 +3,9 @@
   "version": "0.0.1",
   "description": "Snark implementation in C++",
   "main": "index.js",
+  "engines": {
+    "npm": ">=9.0.0"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "task": "node ./tasksfile.js"
