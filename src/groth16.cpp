@@ -98,25 +98,25 @@ std::unique_ptr<Proof<Engine>> Prover<Engine>::prove(typename Engine::FrElement 
     LOG_TRACE("Start Multiexp A");
     uint32_t sW = sizeof(wtns[0]);
     typename Engine::G1Point pi_a;
-    auto pA_future = std::async([&]() {
+    auto pA_future = std::async(std::launch::async, [&]() {
         E.g1.multiMulByScalar(pi_a, pointsA, (uint8_t *)wtns, sW, nVars);
     });
 
     LOG_TRACE("Start Multiexp B1");
     typename Engine::G1Point pib1;
-    auto pB1_future = std::async([&]() {
+    auto pB1_future = std::async(std::launch::async, [&]() {
         E.g1.multiMulByScalar(pib1, pointsB1, (uint8_t *)wtns, sW, nVars);
     });
 
     LOG_TRACE("Start Multiexp B2");
     typename Engine::G2Point pi_b;
-    auto pB2_future = std::async([&]() {
+    auto pB2_future = std::async(std::launch::async, [&]() {
         E.g2.multiMulByScalar(pi_b, pointsB2, (uint8_t *)wtns, sW, nVars);
     });
 
     LOG_TRACE("Start Multiexp C");
     typename Engine::G1Point pi_c;
-    auto pC_future = std::async([&]() {
+    auto pC_future = std::async(std::launch::async, [&]() {
         E.g1.multiMulByScalar(pi_c, pointsC, (uint8_t *)((uint64_t)wtns + (nPublic +1)*sW), sW, nVars-nPublic-1);
     });
 #endif
@@ -320,6 +320,13 @@ std::unique_ptr<Proof<Engine>> Prover<Engine>::prove(typename Engine::FrElement 
 
 
     delete [] a;
+
+#ifndef USE_OPENMP
+    pA_future.get();
+    pB1_future.get();
+    pB2_future.get();
+    pC_future.get();
+#endif
 
     typename Engine::FrElement r;
     typename Engine::FrElement s;
