@@ -39,7 +39,7 @@ android_openmp_x86_64:
 ios:
 	@if [ ! -d "./depends/gmp/package_ios_arm64" ]; then echo "Looks like gmp lib is not built. Run './build_gmp.sh ios' first." && exit 1; fi
 	rm -rf build_prover_ios && mkdir build_prover_ios && cd build_prover_ios && \
-		cmake .. -GXcode -DTARGET_PLATFORM=IOS -DCMAKE_INSTALL_PREFIX=../package_ios && \
+		cmake .. -GXcode -DTARGET_PLATFORM=IOS -DCMAKE_INSTALL_PREFIX=../package_ios -DUSE_ASM=NO && \
 		xcodebuild -destination 'generic/platform=iOS' -scheme rapidsnarkStatic -project rapidsnark.xcodeproj -configuration Release && \
 		xcodebuild -destination 'generic/platform=iOS' -scheme rapidsnark -project rapidsnark.xcodeproj -configuration Release CODE_SIGNING_ALLOWED=NO && \
 		cp ../depends/gmp/package_ios_arm64/lib/libgmp.a src/Release-iphoneos && \
@@ -57,7 +57,7 @@ ios_simulator:
 macos_arm64:
 	@if [ ! -d "./depends/gmp/package_macos_arm64" ]; then echo "Looks like gmp lib is not built. Run './build_gmp.sh macos_arm64' first." && exit 1; fi
 	rm -rf build_prover_macos_arm64 && mkdir build_prover_macos_arm64 && cd build_prover_macos_arm64 && \
-		cmake .. -DTARGET_PLATFORM=macos_arm64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../package_macos_arm64 && \
+		cmake .. -DTARGET_PLATFORM=macos_arm64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../package_macos_arm64 -DUSE_ASM=NO && \
 		make -j$(nproc) -vvv && make install
 
 macos_x86_64:
