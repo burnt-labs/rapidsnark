@@ -1,10 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <vector>
 #include <stdexcept>
-#include "prover.h"
-#include "fileloader.hpp"
 
 #include <chrono>
 #include <gmp.h>
@@ -48,52 +45,8 @@ int main(int argc, char **argv)
         const std::string proofFilename = argv[3];
         const std::string publicFilename = argv[4];
 
-        BinFileUtils::FileLoader zkeyFile(zkeyFilename);
-        BinFileUtils::FileLoader wtnsFile(wtnsFilename);
-        std::vector<char>        publicBuffer;
-        std::vector<char>        proofBuffer;
-        unsigned long long       publicSize = 0;
-        unsigned long long       proofSize = 0;
-        char                     errorMsg[1024];
-
-        int error = groth16_public_size_for_zkey_buf(
-                     zkeyFile.dataBuffer(),
-                     zkeyFile.dataSize(),
-                     &publicSize,
-                     errorMsg,
-                     sizeof(errorMsg));
-
-        if (error != PROVER_OK) {
-            throw std::runtime_error(errorMsg);
-        }
-
-        groth16_proof_size(&proofSize);
         auto zkey = BinFileUtils::openExisting(zkeyFilename, "zkey", 1);
         auto zkeyHeader = ZKeyUtils::loadHeader(zkey.get());
-
-        publicBuffer.resize(publicSize);
-        proofBuffer.resize(proofSize);
-
-        error = groth16_prover(
-                   zkeyFile.dataBuffer(),
-                   zkeyFile.dataSize(),
-                   wtnsFile.dataBuffer(),
-                   wtnsFile.dataSize(),
-                   proofBuffer.data(),
-                   &proofSize,
-                   publicBuffer.data(),
-                   &publicSize,
-                   errorMsg,
-                   sizeof(errorMsg));
-
-        if (error != PROVER_OK) {
-            throw std::runtime_error(errorMsg);
-        }
-
-        std::ofstream publicFile(publicFilename);
-        publicFile.write(publicBuffer.data(), publicSize);
-
-        std::string proofStr;
         if (mpz_cmp(zkeyHeader->rPrime, altBbn128r) != 0) {
             throw std::invalid_argument( "zkey curve not supported" );
         }

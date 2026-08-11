@@ -4,18 +4,23 @@ include(cmake/platform.cmake)
 
 set(USE_ASM    ON CACHE BOOL "Use asm implementation for Fr and Fq")
 set(USE_OPENMP ON CACHE BOOL "Use OpenMP")
+set(USE_CUDA   OFF CACHE BOOL "Build CUDA-accelerated prover and test targets")
 
-project(rapidsnark LANGUAGES CUDA CXX C ASM)
+project(rapidsnark LANGUAGES CXX C ASM)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(CMAKE_CUDA_STANDARD 17)
-set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+if(USE_CUDA)
+    enable_language(CUDA)
+    set(CMAKE_CUDA_STANDARD 17)
+    set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+endif()
 
 message("BITS_PER_CHUNK=" ${BITS_PER_CHUNK})
 message("USE_ASM=" ${USE_ASM})
 message("USE_OPENMP=" ${USE_OPENMP})
+message("USE_CUDA=" ${USE_CUDA})
 message("CMAKE_CROSSCOMPILING=" ${CMAKE_CROSSCOMPILING})
 
 message("GMP_PREFIX=" ${GMP_PREFIX})
@@ -57,7 +62,12 @@ endif()
 add_subdirectory(src)
 
 
-install(TARGETS icicle_msm_test icicle_ntt_test prover_cuda prover verifier rapidsnark rapidsnarkStatic rapidsnarkStaticFrFq test_prover fr fq
+set(INSTALL_TARGETS prover verifier rapidsnark rapidsnarkStatic rapidsnarkStaticFrFq test_prover fr fq)
+if(USE_CUDA)
+    list(APPEND INSTALL_TARGETS icicle_msm_test icicle_ntt_test prover_cuda)
+endif()
+
+install(TARGETS ${INSTALL_TARGETS}
     RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
     BUNDLE DESTINATION ${CMAKE_INSTALL_PREFIX}/app
     LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)

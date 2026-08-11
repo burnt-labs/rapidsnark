@@ -13,7 +13,7 @@ jobs:
   build-linux-x86_64:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: "recursive"
 
@@ -24,7 +24,7 @@ jobs:
           version: x86_64-1.0
 
       - name: Cache gmp build
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             depends/gmp
@@ -82,7 +82,7 @@ jobs:
 
       - name: Upload Linux x86_64 dev artifacts
         if: github.event_name != 'release'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: rapidsnark-linux-x86_64
           path: |
@@ -91,7 +91,7 @@ jobs:
 
       - name: Upload Linux x86_64 noasm dev artifacts
         if: github.event_name != 'release'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: rapidsnark-linux-x86_64-noasm
           path: |
@@ -100,7 +100,7 @@ jobs:
 
       - name: Upload Android dev artifacts
         if: github.event_name != 'release'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: rapidsnark-Android
           path: |
@@ -109,7 +109,7 @@ jobs:
 
       - name: Upload Android dev artifacts
         if: github.event_name != 'release'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: rapidsnark-Android-OpenMP
           path: |
@@ -118,7 +118,7 @@ jobs:
 
       - name: Upload Android x86_64 dev artifacts
         if: github.event_name != 'release'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: rapidsnark-Android-x86_64
           path: |
@@ -127,7 +127,7 @@ jobs:
 
       - name: Upload Android x86_64 dev artifacts (with OpenMP)
         if: github.event_name != 'release'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: rapidsnark-Android-OpenMP-x86_64
           path: |
@@ -181,7 +181,7 @@ jobs:
   build-linux-arm64:
     runs-on: ubuntu-24.04-arm
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: "recursive"
 
@@ -192,7 +192,7 @@ jobs:
           version: arm64-1.0
 
       - name: Cache gmp build
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             depends/gmp
@@ -223,7 +223,7 @@ jobs:
 
       - name: Upload Linux arm64 dev artifacts
         if: github.event_name != 'release'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: rapidsnark-linux-arm64
           path: |
@@ -244,12 +244,12 @@ jobs:
   build-apple-arm64:
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: "recursive"
 
       - name: Cache gmp build
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             depends/gmp
@@ -282,7 +282,7 @@ jobs:
 
       - name: upload macOS arm64 dev artifacts
         if: github.event_name != 'release'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: rapidsnark-macOS-arm64
           path: |
@@ -291,7 +291,7 @@ jobs:
 
       - name: upload iOS dev artifacts
         if: github.event_name != 'release'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: rapidsnark-iOS
           path: |
@@ -300,7 +300,7 @@ jobs:
 
       - name: upload iOS Simulator dev artifacts
         if: github.event_name != 'release'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: rapidsnark-iOS-Simulator
           path: |
@@ -341,14 +341,14 @@ jobs:
           gh release upload ${{ github.event.release.tag_name }} rapidsnark-macOS-arm64-${{ github.ref_name }}.zip
 
   build-apple-x86_64:
-    runs-on: macos-13
+    runs-on: macos-15-intel
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: "recursive"
 
       - name: Cache gmp build
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             depends/gmp
@@ -381,7 +381,7 @@ jobs:
 
       - name: upload macOS x86_64 dev artifacts
         if: github.event_name != 'release'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: rapidsnark-macOS-x86_64
           path: |

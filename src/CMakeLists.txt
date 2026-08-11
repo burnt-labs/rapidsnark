@@ -121,72 +121,51 @@ set_target_properties(rapidsnarkStaticFrFq PROPERTIES OUTPUT_NAME rapidsnark-fr-
 add_executable(prover main_prover.cpp)
 target_link_libraries(prover rapidsnarkStatic)
 
-if(CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL "12.2")
-    message(STATUS "Using multi-threaded CUDA compilation.")
-    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --split-compile 0")
-else()
-    message(STATUS "Can't use multi-threaded CUDA compilation.")
+if(USE_CUDA)
+    if(CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL "12.2")
+        message(STATUS "Using multi-threaded CUDA compilation.")
+        set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --split-compile 0")
+    else()
+        message(STATUS "Can't use multi-threaded CUDA compilation.")
+    endif()
+
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --expt-relaxed-constexpr")
+    set(CMAKE_CUDA_FLAGS_RELEASE "")
+    set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -g -G -O0")
+
+    if (${CMAKE_VERSION} VERSION_LESS "3.24.0")
+        set(CMAKE_CUDA_ARCHITECTURES ${CUDA_ARCH})
+    else()
+        set(CMAKE_CUDA_ARCHITECTURES native) # on 3.24+, on earlier it is ignored, and the target is not passed
+    endif ()
+
+    # Robustly find NVML library
+    find_library(NVML_LIBRARY nvidia-ml)
+    if(NOT NVML_LIBRARY)
+        # Check common CUDA stub locations
+        file(GLOB CUDA_STUBS "/usr/local/cuda-*/targets/x86_64-linux/lib/stubs")
+        find_library(NVML_LIBRARY nvidia-ml PATHS ${CUDA_STUBS})
+    endif()
+
+    if(NOT NVML_LIBRARY)
+        message(WARNING "nvidia-ml library not found. GPU targets might fail to link.")
+    endif()
+
+    add_executable(icicle_ntt_test main_icicle_ntt_test.cu)
+    target_link_libraries(icicle_ntt_test rapidsnarkStatic ${NVML_LIBRARY})
+    target_include_directories(icicle_ntt_test PUBLIC ../depends/icicle/icicle)
+    set_target_properties(icicle_ntt_test PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+
+    add_executable(prover_cuda main_prover_cuda.cu)
+    target_link_libraries(prover_cuda rapidsnarkStatic ${NVML_LIBRARY})
+    target_include_directories(prover_cuda PUBLIC ../depends/icicle/icicle)
+    set_target_properties(prover_cuda PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+
+    add_executable(icicle_msm_test main_icicle_msm_test.cu)
+    target_link_libraries(icicle_msm_test rapidsnarkStatic ${NVML_LIBRARY})
+    target_include_directories(icicle_msm_test PUBLIC ../depends/icicle/icicle)
+    set_target_properties(icicle_msm_test PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 endif()
-
-set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --expt-relaxed-constexpr")
-set(CMAKE_CUDA_FLAGS_RELEASE "")
-set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -g -G -O0")
-
-if (${CMAKE_VERSION} VERSION_LESS "3.24.0")
-    set(CMAKE_CUDA_ARCHITECTURES ${CUDA_ARCH})
-else()
-    set(CMAKE_CUDA_ARCHITECTURES native) # on 3.24+, on earlier it is ignored, and the target is not passed
-endif ()
-
-add_executable(icicle_ntt_test main_icicle_ntt_test.cu)
-target_link_libraries(icicle_ntt_test rapidsnarkStatic)
-
-
-target_include_directories(
-    icicle_ntt_test
-    PUBLIC
-    ../depends/icicle/icicle
-)
-
-# Robustly find NVML library
-find_library(NVML_LIBRARY nvidia-ml)
-if(NOT NVML_LIBRARY)
-    # Check common CUDA stub locations
-    file(GLOB CUDA_STUBS "/usr/local/cuda-*/targets/x86_64-linux/lib/stubs")
-    find_library(NVML_LIBRARY nvidia-ml PATHS ${CUDA_STUBS})
-endif()
-
-if(NOT NVML_LIBRARY)
-    message(WARNING "nvidia-ml library not found. GPU targets might fail to link.")
-endif()
-
-target_link_libraries(icicle_ntt_test ${NVML_LIBRARY})
-set_target_properties(icicle_ntt_test PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
-
-add_executable(prover_cuda main_prover_cuda.cu)
-target_link_libraries(prover_cuda rapidsnarkStatic)
-
-
-target_include_directories(
-    prover_cuda
-    PUBLIC
-    ../depends/icicle/icicle
-)
-target_link_libraries(prover_cuda ${NVML_LIBRARY})
-set_target_properties(prover_cuda PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
-
-add_executable(icicle_msm_test main_icicle_msm_test.cu)
-target_link_libraries(icicle_msm_test rapidsnarkStatic)
-
-
-target_include_directories(
-    icicle_msm_test
-    PUBLIC
-    ../depends/icicle/icicle
-)
-# find_library(NVML_LIBRARY nvidia-ml PATHS /usr/local/cuda-12.3/targets/x86_64-linux/lib/stubs/ )
-target_link_libraries(icicle_msm_test ${NVML_LIBRARY})
-set_target_properties(icicle_msm_test PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
 
 
@@ -197,17 +176,21 @@ add_library(rapidsnark SHARED ${LIB_SOURCES})
 
 if((USE_LOGGER OR NOT USE_OPENMP) AND NOT TARGET_PLATFORM MATCHES "android")
     target_link_libraries(prover pthread)
-    target_link_libraries(icicle_ntt_test pthread)
-    target_link_libraries(icicle_msm_test pthread)
-    target_link_libraries(prover_cuda pthread)
+    if(USE_CUDA)
+        target_link_libraries(icicle_ntt_test pthread)
+        target_link_libraries(icicle_msm_test pthread)
+        target_link_libraries(prover_cuda pthread)
+    endif()
     target_link_libraries(verifier pthread)
 endif()
 
 if(USE_SODIUM)
     target_link_libraries(prover sodium)
-    target_link_libraries(icicle_ntt_test sodium)
-    target_link_libraries(icicle_msm_test sodium)
-    target_link_libraries(prover_cuda sodium)
+    if(USE_CUDA)
+        target_link_libraries(icicle_ntt_test sodium)
+        target_link_libraries(icicle_msm_test sodium)
+        target_link_libraries(prover_cuda sodium)
+    endif()
 endif()
 
 option(BUILD_TESTS "Build the tests" ON)
@@ -224,17 +207,21 @@ if(OpenMP_CXX_FOUND)
 
     if(TARGET_PLATFORM MATCHES "android")
         target_link_libraries(prover -static-openmp -fopenmp)
-        target_link_libraries(prover_cuda -static-openmp -fopenmp)
-        target_link_libraries(icicle_ntt_test -static-openmp -fopenmp)
-        target_link_libraries(icicle_msm_test -static-openmp -fopenmp)
+        if(USE_CUDA)
+            target_link_libraries(prover_cuda -static-openmp -fopenmp)
+            target_link_libraries(icicle_ntt_test -static-openmp -fopenmp)
+            target_link_libraries(icicle_msm_test -static-openmp -fopenmp)
+        endif()
         target_link_libraries(verifier -static-openmp -fopenmp)
         target_link_libraries(rapidsnark -static-openmp -fopenmp)
 
     elseif(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
         target_link_libraries(prover OpenMP::OpenMP_CXX)
-        target_link_libraries(prover_cuda OpenMP::OpenMP_CXX)
-        target_link_libraries(icicle_ntt_test OpenMP::OpenMP_CXX)
-        target_link_libraries(icicle_msm_test OpenMP::OpenMP_CXX)
+        if(USE_CUDA)
+            target_link_libraries(prover_cuda OpenMP::OpenMP_CXX)
+            target_link_libraries(icicle_ntt_test OpenMP::OpenMP_CXX)
+            target_link_libraries(icicle_msm_test OpenMP::OpenMP_CXX)
+        endif()
         target_link_libraries(verifier OpenMP::OpenMP_CXX)
         target_link_libraries(test_public_size OpenMP::OpenMP_CXX)
     endif()
